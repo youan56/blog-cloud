@@ -1,112 +1,72 @@
 /**
  * @file LoginPage.tsx - 登录页
- * @description 纯客户端密码验证，CloudBase 状态仅做提示
+ * @description 纯客户端密码验证，不依赖任何外部服务
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { cloudBaseReady, cloudBaseError } from '../lib/cloudbase'
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoggingIn, setIsLoggingIn] = useState(false)
-  const [cloudStatus, setCloudStatus] = useState<'connecting' | 'ready' | 'error'>('connecting')
-
-  // 监听 CloudBase 状态（仅用于显示，不阻塞登录）
-  useEffect(() => {
-    const check = () => {
-      if (cloudBaseReady) setCloudStatus('ready')
-      else if (cloudBaseError) setCloudStatus('error')
-    }
-    check()
-    const timer = setInterval(check, 1000)
-    // 10 秒后停止检查
-    setTimeout(() => { clearInterval(timer); if (!cloudBaseReady) setCloudStatus('error') }, 10000)
-    return () => clearInterval(timer)
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
     if (!password) {
       setError('请输入密码')
       return
     }
-
     setIsLoggingIn(true)
     const result = await login('', password)
     setIsLoggingIn(false)
-
     if (!result.success) {
       setError(result.error || '登录失败')
     }
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">加载中...</div>
-      </div>
-    )
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>加载中...</div>
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            博客管理后台
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            请输入管理密码
-          </p>
-          {/* CloudBase 连接状态（仅提示） */}
-          <div className="mt-3 text-center text-xs">
-            {cloudStatus === 'connecting' && (
-              <span className="text-yellow-600">⏳ 云端服务连接中...</span>
-            )}
-            {cloudStatus === 'ready' && (
-              <span className="text-green-600">✅ 云端服务已连接</span>
-            )}
-            {cloudStatus === 'error' && (
-              <span className="text-orange-600">⚠️ 云端服务未连接（登录后可重试）</span>
-            )}
-          </div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', padding: '16px' }}>
+      <div style={{ maxWidth: '400px', width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#111827' }}>博客管理后台</h2>
+          <p style={{ marginTop: '8px', fontSize: '14px', color: '#6b7280' }}>请输入管理密码</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px 16px', borderRadius: '8px', fontSize: '14px' }}>
               {error}
             </div>
           )}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              管理密码
-            </label>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>管理密码</label>
             <input
-              id="password"
-              name="password"
               type="password"
               required
               autoFocus
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="输入管理密码"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="输入管理密码"
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
             />
           </div>
-          <div>
-            <button
-              type="submit"
-              disabled={isLoggingIn}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoggingIn ? '登录中...' : '登录'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoggingIn}
+            style={{
+              width: '100%', padding: '10px 16px', background: '#2563eb', color: 'white',
+              border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600,
+              cursor: isLoggingIn ? 'not-allowed' : 'pointer', opacity: isLoggingIn ? 0.5 : 1
+            }}
+          >
+            {isLoggingIn ? '登录中...' : '登录'}
+          </button>
         </form>
       </div>
     </div>

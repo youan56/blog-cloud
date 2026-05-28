@@ -1,12 +1,11 @@
 /**
  * @file Dashboard.tsx - 仪表盘
- * @description 显示文章列表，管理文章，带 CloudBase 错误提示
  */
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
-import { db, cloudBaseReady, cloudBaseError } from '../lib/cloudbase'
+import { getDb, getError } from '../lib/cloudbase'
 import type { BlogPost } from '../types'
 
 export default function Dashboard() {
@@ -16,13 +15,12 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadPosts()
-  }, [])
+  useEffect(() => { loadPosts() }, [])
 
   const loadPosts = async () => {
-    if (!cloudBaseReady || !db) {
-      setErrorMsg('云端服务未就绪：' + (cloudBaseError || '连接中，请稍后刷新'))
+    const db = getDb()
+    if (!db) {
+      setErrorMsg('云端服务未就绪：' + (getError() || '连接中，请稍后点击重试'))
       setIsLoading(false)
       return
     }
@@ -31,8 +29,7 @@ export default function Dashboard() {
       setPosts(result.data as unknown as BlogPost[])
       setErrorMsg(null)
     } catch (error: any) {
-      console.error('加载文章失败:', error)
-      setErrorMsg('加载文章失败: ' + error.message)
+      setErrorMsg('加载失败: ' + error.message)
     } finally {
       setIsLoading(false)
     }
@@ -40,131 +37,68 @@ export default function Dashboard() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('确定要删除这篇文章吗？')) return
+    const db = getDb()
     if (!db) { alert('云端服务未就绪'); return }
     try {
       await db.collection('posts').doc(id).remove()
       loadPosts()
     } catch (error: any) {
-      console.error('删除失败:', error)
       alert('删除失败: ' + error.message)
     }
   }
 
-  const handleNewArticle = () => {
-    console.log('📝 点击新建文章，导航到 /editor')
-    navigate('/editor')
-  }
-
-  const handleSettings = () => {
-    console.log('⚙️ 点击设置，导航到 /settings')
-    navigate('/settings')
-  }
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">加载中...</div>
-      </div>
-    )
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>加载中...</div>
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">博客管理后台</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleSettings}
-              className="text-gray-500 hover:text-gray-700 text-sm cursor-pointer"
-            >
-              ⚙️ 设置
-            </button>
-            <span className="text-sm text-gray-600">
-              {user?.nickname || user?.username}
-            </span>
-            <button
-              onClick={logout}
-              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 cursor-pointer"
-            >
-              退出
-            </button>
-          </div>
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <header style={{ background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>博客管理后台</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button onClick={() => navigate('/settings')} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '14px' }}>⚙️ 设置</button>
+          <span style={{ fontSize: '14px', color: '#6b7280' }}>{user?.nickname || user?.username}</span>
+          <button onClick={logout} style={{ padding: '8px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>退出</button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* 云端状态提示 */}
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
         {errorMsg && (
-          <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm">
+          <div style={{ marginBottom: '16px', background: '#fefce8', border: '1px solid #fde68a', color: '#92400e', padding: '12px 16px', borderRadius: '8px', fontSize: '14px' }}>
             ⚠️ {errorMsg}
-            <button onClick={loadPosts} className="ml-3 underline hover:text-yellow-900 cursor-pointer">
-              重试
-            </button>
+            <button onClick={loadPosts} style={{ marginLeft: '12px', textDecoration: 'underline', background: 'none', border: 'none', color: '#92400e', cursor: 'pointer' }}>重试</button>
           </div>
         )}
 
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">文章列表</h2>
-          <button
-            onClick={handleNewArticle}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-          >
-            新建文章
-          </button>
+        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827' }}>文章列表</h2>
+          <button onClick={() => navigate('/editor')} style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>新建文章</button>
         </div>
 
         {posts.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            暂无文章，点击「新建文章」开始创作
+          <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
+            {errorMsg ? '无法加载文章' : '暂无文章，点击「新建文章」开始创作'}
           </div>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {posts.map((post) => (
-                <li key={post._id}>
-                  <div className="px-4 py-4 sm:px-6 flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-medium text-blue-600 truncate">
-                        {post.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                        {post.summary}
-                      </p>
-                      <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          post.status === 'published'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {post.status === 'published' ? '已发布' : '草稿'}
-                        </span>
-                        {post.tags && post.tags.length > 0 && (
-                          <span>🏷️ {post.tags.join(', ')}</span>
-                        )}
-                        {post.createdAt && (
-                          <span>📅 {new Date(post.createdAt as any).toLocaleDateString('zh-CN')}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="ml-4 flex gap-2">
-                      <button
-                        onClick={() => navigate(`/editor?id=${post._id}`)}
-                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => post._id && handleDelete(post._id)}
-                        className="px-3 py-1 border border-red-300 rounded-md text-sm font-medium text-red-700 hover:bg-red-50 cursor-pointer"
-                      >
-                        删除
-                      </button>
-                    </div>
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+            {posts.map((post) => (
+              <div key={post._id} style={{ padding: '16px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2563eb' }}>{post.title}</h3>
+                  {post.summary && <p style={{ marginTop: '4px', fontSize: '14px', color: '#6b7280' }}>{post.summary}</p>}
+                  <div style={{ marginTop: '8px', display: 'flex', gap: '12px', fontSize: '13px', color: '#9ca3af' }}>
+                    <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 500, background: post.status === 'published' ? '#dcfce7' : '#fef9c3', color: post.status === 'published' ? '#166534' : '#854d0e' }}>
+                      {post.status === 'published' ? '已发布' : '草稿'}
+                    </span>
+                    {post.tags && post.tags.length > 0 && <span>🏷️ {post.tags.join(', ')}</span>}
                   </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
+                  <button onClick={() => navigate(`/editor?id=${post._id}`)} style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', color: '#374151', background: 'white', cursor: 'pointer' }}>编辑</button>
+                  <button onClick={() => post._id && handleDelete(post._id)} style={{ padding: '6px 12px', border: '1px solid #fca5a5', borderRadius: '6px', fontSize: '13px', color: '#dc2626', background: 'white', cursor: 'pointer' }}>删除</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </main>

@@ -1,10 +1,4 @@
-/**
- * @file AuthContext.tsx - 认证上下文
- * @description 登录验证与 CloudBase 完全解耦，密码验证是纯客户端行为
- */
-
 import { createContext, useContext, useEffect, useState } from 'react'
-import { ADMIN_PASSWORD } from '../lib/cloudbase'
 import type { AuthContextType, User } from '../types'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -12,12 +6,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const AUTH_KEY = 'blog_admin_auth'
 const USER_KEY = 'blog_admin_user'
 
+// 从环境变量读取密码（Vercel Dashboard 设置，不在 GitHub 里）
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // 启动时检查本地登录状态（不依赖 CloudBase）
   useEffect(() => {
     try {
       const savedAuth = localStorage.getItem(AUTH_KEY)
@@ -26,32 +22,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(JSON.parse(savedUser))
         setIsAuthenticated(true)
       }
-    } catch (e) {
-      console.error('恢复登录状态失败:', e)
+    } catch {
       localStorage.removeItem(AUTH_KEY)
       localStorage.removeItem(USER_KEY)
     }
-    // 无论成功失败，立即结束加载状态（不等 CloudBase）
     setIsLoading(false)
   }, [])
 
-  // 登录（纯客户端密码验证，不依赖 CloudBase）
-  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (_username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (!ADMIN_PASSWORD) {
+      return { success: false, error: '管理密码未配置（请在 Vercel 环境变量中设置 VITE_ADMIN_PASSWORD）' }
+    }
     if (password !== ADMIN_PASSWORD) {
       return { success: false, error: '密码错误' }
     }
-
-    const adminUser: User = {
-      id: 'admin',
-      username: username || 'admin',
-      nickname: username || '管理员',
-    }
-
+    const adminUser: User = { id: 'admin', username: 'admin', nickname: '管理员' }
     localStorage.setItem(AUTH_KEY, 'true')
     localStorage.setItem(USER_KEY, JSON.stringify(adminUser))
     setUser(adminUser)
     setIsAuthenticated(true)
-
     return { success: true }
   }
 
@@ -70,9 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
 }
