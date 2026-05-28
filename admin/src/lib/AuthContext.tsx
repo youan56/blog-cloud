@@ -1,66 +1,46 @@
+/**
+ * @file AuthContext.tsx - 认证上下文
+ * @description 登录验证与 CloudBase 完全解耦，密码验证是纯客户端行为
+ */
+
 import { createContext, useContext, useEffect, useState } from 'react'
-import { signInAnonymously, signOut, initError, ADMIN_PASSWORD } from '../lib/cloudbase'
+import { ADMIN_PASSWORD } from '../lib/cloudbase'
 import type { AuthContextType, User } from '../types'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// 本地存储 key
-const AUTH_KEY = 'admin_logged_in'
-const USER_KEY = 'admin_user'
+const AUTH_KEY = 'blog_admin_auth'
+const USER_KEY = 'blog_admin_user'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [cloudBaseReady, setCloudBaseReady] = useState(false)
 
+  // 启动时检查本地登录状态（不依赖 CloudBase）
   useEffect(() => {
-    async function init() {
-      // 1. 初始化 CloudBase 匿名登录（获取数据库权限）
-      const cloudOk = await signInAnonymously()
-      setCloudBaseReady(cloudOk)
-
-      // 2. 检查本地登录状态
+    try {
       const savedAuth = localStorage.getItem(AUTH_KEY)
-      if (savedAuth === 'true') {
-        const savedUser = localStorage.getItem(USER_KEY)
-        if (savedUser) {
-          try {
-            setUser(JSON.parse(savedUser))
-            setIsAuthenticated(true)
-          } catch (e) {
-            localStorage.removeItem(AUTH_KEY)
-            localStorage.removeItem(USER_KEY)
-          }
-        }
+      const savedUser = localStorage.getItem(USER_KEY)
+      if (savedAuth === 'true' && savedUser) {
+        setUser(JSON.parse(savedUser))
+        setIsAuthenticated(true)
       }
-
-      setIsLoading(false)
+    } catch (e) {
+      console.error('恢复登录状态失败:', e)
+      localStorage.removeItem(AUTH_KEY)
+      localStorage.removeItem(USER_KEY)
     }
-    init()
+    // 无论成功失败，立即结束加载状态（不等 CloudBase）
+    setIsLoading(false)
   }, [])
 
+  // 登录（纯客户端密码验证，不依赖 CloudBase）
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // 检查 CloudBase 是否就绪
-    if (!cloudBaseReady && !initError) {
-      // 尝试重新初始化
-      const ok = await signInAnonymously()
-      if (!ok) {
-        return { success: false, error: '云端服务连接失败，请刷新页面重试' }
-      }
-      setCloudBaseReady(true)
-    }
-
-    if (initError) {
-      return { success: false, error: '云端服务初始化失败: ' + initError }
-    }
-
-    // 验证密码
     if (password !== ADMIN_PASSWORD) {
       return { success: false, error: '密码错误' }
     }
 
-    // 登录成功
     const adminUser: User = {
       id: 'admin',
       username: username || 'admin',
@@ -80,7 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(USER_KEY)
     setUser(null)
     setIsAuthenticated(false)
-    await signOut()
   }
 
   return (

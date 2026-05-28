@@ -1,13 +1,31 @@
-import React, { useState } from 'react'
+/**
+ * @file LoginPage.tsx - 登录页
+ * @description 纯客户端密码验证，CloudBase 状态仅做提示
+ */
+
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { initError } from '../lib/cloudbase'
+import { cloudBaseReady, cloudBaseError } from '../lib/cloudbase'
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth()
-  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [cloudStatus, setCloudStatus] = useState<'connecting' | 'ready' | 'error'>('connecting')
+
+  // 监听 CloudBase 状态（仅用于显示，不阻塞登录）
+  useEffect(() => {
+    const check = () => {
+      if (cloudBaseReady) setCloudStatus('ready')
+      else if (cloudBaseError) setCloudStatus('error')
+    }
+    check()
+    const timer = setInterval(check, 1000)
+    // 10 秒后停止检查
+    setTimeout(() => { clearInterval(timer); if (!cloudBaseReady) setCloudStatus('error') }, 10000)
+    return () => clearInterval(timer)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +37,7 @@ export default function LoginPage() {
     }
 
     setIsLoggingIn(true)
-    const result = await login(username, password)
+    const result = await login('', password)
     setIsLoggingIn(false)
 
     if (!result.success) {
@@ -30,10 +48,7 @@ export default function LoginPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-gray-500 mb-2">正在连接云端服务...</div>
-          <div className="text-xs text-gray-400">CloudBase 初始化中</div>
-        </div>
+        <div className="text-gray-500">加载中...</div>
       </div>
     )
   }
@@ -43,17 +58,23 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            星绘 sama 博客管理
+            博客管理后台
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            请登录以管理博客内容
+            请输入管理密码
           </p>
-          {/* CloudBase 连接状态 */}
-          {initError && (
-            <div className="mt-3 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded text-xs text-center">
-              ⚠️ 云端服务异常：{initError}
-            </div>
-          )}
+          {/* CloudBase 连接状态（仅提示） */}
+          <div className="mt-3 text-center text-xs">
+            {cloudStatus === 'connecting' && (
+              <span className="text-yellow-600">⏳ 云端服务连接中...</span>
+            )}
+            {cloudStatus === 'ready' && (
+              <span className="text-green-600">✅ 云端服务已连接</span>
+            )}
+            {cloudStatus === 'error' && (
+              <span className="text-orange-600">⚠️ 云端服务未连接（登录后可重试）</span>
+            )}
+          </div>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
@@ -61,38 +82,22 @@ export default function LoginPage() {
               {error}
             </div>
           )}
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                用户名
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="输入用户名（可留空）"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                密码
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="输入管理密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              管理密码
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autoFocus
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="输入管理密码"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
-
           <div>
             <button
               type="submit"
