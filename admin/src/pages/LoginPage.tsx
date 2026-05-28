@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { initError } from '../lib/cloudbase'
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth()
@@ -12,8 +13,8 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
 
-    if (!username || !password) {
-      setError('请输入用户名和密码')
+    if (!password) {
+      setError('请输入密码')
       return
     }
 
@@ -28,8 +29,11 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-gray-500 mb-2">正在连接云端服务...</div>
+          <div className="text-xs text-gray-400">CloudBase 初始化中</div>
+        </div>
       </div>
     )
   }
@@ -44,10 +48,16 @@ export default function LoginPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             请登录以管理博客内容
           </p>
+          {/* CloudBase 连接状态 */}
+          {initError && (
+            <div className="mt-3 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded text-xs text-center">
+              ⚠️ 云端服务异常：{initError}
+            </div>
+          )}
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
               {error}
             </div>
           )}
@@ -60,9 +70,8 @@ export default function LoginPage() {
                 id="username"
                 name="username"
                 type="text"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="输入用户名"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="输入用户名（可留空）"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -76,8 +85,8 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="输入密码"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="输入管理密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

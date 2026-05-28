@@ -38,7 +38,7 @@ export default function EditorPage() {
     db.collection('posts')
       .doc(postId)
       .get()
-      .then((res) => {
+      .then((res: any) => {
         const post = res.data as any
         if (post) {
           setTitle(post.title || '')
@@ -49,7 +49,7 @@ export default function EditorPage() {
           setStatus(post.status || 'draft')
         }
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error('加载文章失败:', err)
         alert('加载文章失败')
       })
@@ -105,7 +105,7 @@ export default function EditorPage() {
       }
       setLastSaved(new Date().toLocaleTimeString())
       setStatus(saveStatus)
-    } catch (err) {
+    } catch (err: any) {
       console.error('保存失败:', err)
       alert('保存失败: ' + (err as Error).message)
     } finally {

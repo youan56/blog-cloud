@@ -59,7 +59,7 @@ export default function SettingsPage() {
     db.collection('siteConfig')
       .limit(1)
       .get()
-      .then((res) => {
+      .then((res: any) => {
         if (res.data && res.data.length > 0) {
           const config = res.data[0] as any
           setFormData({
@@ -72,7 +72,7 @@ export default function SettingsPage() {
           })
         }
       })
-      .catch((err) => console.error('加载配置失败:', err))
+      .catch((err: any) => console.error('加载配置失败:', err))
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -118,7 +118,7 @@ export default function SettingsPage() {
         })
       }
       setToast({ message: '✅ 配置已保存到云端！', type: 'success' })
-    } catch (err) {
+    } catch (err: any) {
       console.error('保存失败:', err)
       setToast({ message: '❌ 保存失败: ' + (err as Error).message, type: 'error' })
     } finally {
