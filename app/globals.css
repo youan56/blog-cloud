@@ -1,139 +1,132 @@
 @import "tailwindcss";
 
-:root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --text-primary: #e4e4e7;
-  --text-secondary: #a1a1aa;
-  --accent: #f97316;
-  --accent-hover: #ea580c;
+/* ========== 暗色模式变体声明 ========== */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ========== 自定义 CSS 变量 ========== */
+@layer base {
+  :root {
+    /* 主背景色：亮模式用浅灰白 */
+    --bg-primary: #f8fafc;
+    /* 次背景色 */
+    --bg-secondary: #f1f5f9;
+    /* 主文字颜色 */
+    --text-primary: #0f172a;
+    /* 次文字颜色 */
+    --text-secondary: #64748b;
+    /* 毛玻璃背景色 */
+    --glass-bg: rgba(255, 255, 255, 0.5);
+    /* 毛玻璃边框色 */
+    --glass-border: rgba(255, 255, 255, 0.4);
+    /* 毛玻璃模糊程度 */
+    --glass-blur: 12px;
+    /* 主题色：原版紫蓝粉渐变 */
+    --accent-color: #a18cd1;
+    /* 主题色悬停效果 */
+    --accent-hover: #8b5cf6;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ========== 全局 body 样式 ========== */
+@layer base {
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    /* 使用系统中文字体栈 */
+    font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4 {
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
 }
 
-body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
+/* ========== 暗色模式 body ========== */
+.dark body {
+  background-color: #020617;
+  color: #f1f5f9;
 }
 
-/* 毛玻璃卡片 */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+.dark .prose {
+  --tw-prose-body: #cbd5e1;
+  --tw-prose-headings: #ffffff;
+  --tw-prose-links: #a78bfa;
 }
 
-.glass-sm {
-  background: var(--glass-bg);
+/* ========== 毛玻璃卡片样式（亮模式） ========== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
 }
 
-/* 主按钮（橘色） */
-.btn-primary {
-  background: var(--accent);
-  color: white;
-  padding: 10px 24px;
-  border-radius: 10px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* 次要按钮 */
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  padding: 10px 24px;
-  border-radius: 10px;
-  font-weight: 600;
+/* ========== 毛玻璃卡片样式（暗模式） ========== */
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
+/* ========== 性能优化 ========== */
+[class*="backdrop-blur-"] {
+  will-change: backdrop-filter;
+  -webkit-backdrop-filter: blur(12px);
 }
 
-/* 输入框 */
-input[type="text"],
-input[type="password"],
-input[type="email"],
-textarea {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 12px 16px;
-  color: var(--text-primary);
-  width: 100%;
-  outline: none;
-  transition: border-color 0.2s;
-  font-size: 14px;
+.group:hover img {
+  will-change: transform;
 }
 
-input:focus,
-textarea:focus {
-  border-color: var(--accent);
+/* ========== 渐变背景动画 ========== */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* Toast 动画 */
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOut {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(100%); opacity: 0; }
-}
-
-.toast-enter {
-  animation: slideIn 0.3s ease-out;
-}
-
-.toast-exit {
-  animation: slideOut 0.3s ease-in;
-}
-
-/* 滚动条样式 */
+/* ========== 滚动条美化 ========== */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: rgba(161, 140, 209, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(161, 140, 209, 0.8);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(161, 140, 209, 0.3) transparent;
+}
+
+/* ========== 音乐播放器滑块 ========== */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+}
+
+/* ========== Firefox 毛玻璃兼容 ========== */
+@-moz-document url-prefix() {
+  [class*="backdrop-blur-md"] {
+    backdrop-filter: blur(8px) !important;
+  }
 }
