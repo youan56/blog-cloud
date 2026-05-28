@@ -1,63 +1,26 @@
-# 💜 佑安 Mi 的云端博客
+# XinghuisamaBlogs 主仓库
 
-基于 Next.js 16 + Vercel + CloudBase 的现代化博客系统
+这是星绘 sama 博客的完整项目，包含：
 
-## 🎯 特性
+## 目录结构
 
-- ✅ 深色毛玻璃 UI 风格
-- ✅ 管理后台部署到 Vercel
-- ✅ 配置实时保存到云端
-- ✅ 文章存入 CloudBase 数据库
-- ✅ 密码安全（环境变量存储）
+- `/` - 根目录（博客网站源码，Vercel部署）
+- `/admin` - 管理后台（React + CloudBase）
+- `/docs` - 文档（如果有的话）
 
-## 🚀 快速开始
+## 项目说明
 
-### 1. 安装依赖
+### 博客网站
+- 地址: https://xinghuisama-blogs-pi.vercel.app/
+- 部署: Vercel
+- 域名: www.hanyouan.cloud（配置中）
 
-```bash
-npm install
-```
+### 管理后台
+- 地址: https://admin.hanyouan.cloud（待配置）
+- 技术: React 18 + TypeScript + Vite
+- 后端: CloudBase（腾讯云开发）
+- 功能: 文章管理、用户认证、内容编辑
 
-### 2. 配置环境变量
+## 部署指南
 
-创建 `.env.local` 文件：
-
-```bash
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_password
-CLOUDBASE_ENV_ID=a-d6gb40txde961926e
-CLOUDBASE_REGION=ap-shanghai
-```
-
-### 3. 本地开发
-
-```bash
-npm run dev
-```
-
-访问 http://localhost:3000
-
-## 📦 部署到 Vercel
-
-1. 推送代码到 GitHub
-2. 在 Vercel 导入项目
-3. 配置环境变量
-4. 点击 Deploy
-
-## 📁 项目结构
-
-```
-blog-cloud/
-├── app/
-│   ├── admin/          # 管理后台
-│   ├── api/            # API 路由
-│   ├── components/     # 组件
-│   ├── context/        # React Context
-│   └── lib/            # 工具函数
-├── public/             # 静态资源
-└── package.json
-```
-
-## 💜 作者
-
-佑安 Mi - 在代码、学术与分子动力学模拟间穿梭的普通人
+详细部署步骤请查看 `/admin/DEPLOY.md` 和 `/admin/DOMAIN_SETUP.md`
