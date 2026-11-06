@@ -10,8 +10,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 type ThemeMode = 'auto' | 'light' | 'dark';
 
-const DAY_START_HOUR = 6;
-const NIGHT_START_HOUR = 18;
+const DAY_START_HOUR = 7;
+const NIGHT_START_HOUR = 19;
 
 /** 当前是否属于夜间（按访问者本地时间） */
 function isNightNow() {
