@@ -12,12 +12,14 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, PanInfo } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
+import { useTheme } from './ThemeProvider';
 
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isDark, mode, cycleTheme } = useTheme();
   const pathname = usePathname();
 
   // 🌟 检测登录状态（读取 cookie）
@@ -128,6 +130,16 @@ export default function Navbar() {
               );
             })}
             
+            {/* 🌓 昼夜模式：自动 → 日间 → 夜间 循环 */}
+            <button
+              onClick={cycleTheme}
+              title={mode === 'auto' ? '自动模式（跟随时间）' : mode === 'light' ? '日间模式' : '夜间模式'}
+              aria-label="切换昼夜模式"
+              className="text-lg leading-none opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
+            >
+              {mode === 'auto' ? (isDark ? '🌗' : '🌓') : isDark ? '🌙' : '☀️'}
+            </button>
+
             {/* 🌟 登录按钮 / 管理入口 */}
             {isLoggedIn ? (
               <>
@@ -158,6 +170,15 @@ export default function Navbar() {
           </nav>
         </div>
       </header>
+
+      {/* 📱 手机端：左下角昼夜切换 */}
+      <button
+        onClick={cycleTheme}
+        aria-label="切换昼夜模式"
+        className="md:hidden fixed bottom-6 left-4 z-[55] w-11 h-11 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-lg border border-white/50 dark:border-slate-700 flex items-center justify-center text-lg active:scale-95 transition-transform"
+      >
+        {mode === 'auto' ? (isDark ? '🌗' : '🌓') : isDark ? '🌙' : '☀️'}
+      </button>
 
       {/* 📱 手机端：可拖拽吸附的触发球 */}
       <div className="md:hidden">
