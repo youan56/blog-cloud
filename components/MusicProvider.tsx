@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
-import { siteConfig } from '../siteConfig';
+import { useSiteConfig } from './SiteConfigProvider';
+import { siteConfig as defaultConfig } from '../siteConfig';
 
 // 【增强版 LRC 歌词解析】
 function parseLrc(lrcText: string) {
@@ -80,29 +81,36 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // 歌单以云端配置为准（后台设置页保存后立即生效）
+  const { config, loaded } = useSiteConfig();
+  // 云端配置里绑了歌就用云端的；没绑（空）则用代码里的默认歌单
+  const cloudIds = config.cloudMusicIds || [];
+  const musicIds = cloudIds.length > 0 ? cloudIds : (defaultConfig.cloudMusicIds || []);
+
   useEffect(() => {
+    if (!loaded) return;
     let isMounted = true;
     const fetchMusicData = async () => {
       try {
-        const fetchPromises = siteConfig.cloudMusicIds.map(id =>
-          fetch(`https://api.injahow.cn/meting/?server=netease&type=song&id=${id}`)
+        // 全部走本站代理接口，音频与歌词不再受上游防盗链/跨域影响
+        const fetchPromises = musicIds.map(id =>
+          fetch(`/api/music?type=song&id=${id}`, { cache: 'no-store' })
             .then(res => res.json())
             .catch(() => null)
         );
         const results = await Promise.all(fetchPromises);
 
         const mergedPlaylist = results
-          .filter(res => res && res.length > 0)
+          .filter(res => res && res.success && res.data)
           .map(res => ({
-            id: res[0].id || Math.random().toString(),
-            title: res[0].name || res[0].title || '未知歌曲',
-            artist: res[0].author || res[0].artist || '未知歌手',
-            cover: res[0].pic || res[0].cover || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
-            src: res[0].url,
-            lrcUrl: res[0].lrc,
+            id: res.data.id,
+            title: res.data.title || '未知歌曲',
+            artist: res.data.artist || '未知歌手',
+            cover: res.data.cover || 'https://bu.dusays.com/2026/03/24/69c24230a5ff8.jpg',
+            src: `/api/music?type=url&id=${res.data.id}`,
+            lrcUrl: `/api/music?type=lrc&id=${res.data.id}`,
             lyrics: [] // 🌟 初始化时预留一个空数组
-          }))
-          .filter(song => song.src);
+          }));
 
         if (isMounted) {
           if (mergedPlaylist.length > 0) setPlaylist(mergedPlaylist);
@@ -114,11 +122,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    if (siteConfig.cloudMusicIds?.length > 0) fetchMusicData();
+    if (musicIds.length > 0) fetchMusicData();
     else setIsLoading(false);
 
     return () => { isMounted = false; };
-  }, []);
+  }, [loaded, musicIds.join(',')]);
 
   useEffect(() => {
     if (playlist.length === 0) return;

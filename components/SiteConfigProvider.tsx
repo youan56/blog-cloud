@@ -51,15 +51,19 @@ interface SiteConfigType {
 /** Context 定义 */
 const SiteConfigContext = createContext<{
   config: SiteConfigType;
+  loaded: boolean;
   refreshConfig: () => void;
 }>({
   config: staticConfig as SiteConfigType,
+  loaded: false,
   refreshConfig: () => {},
 });
 
 /** Provider 组件 */
 export function SiteConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<SiteConfigType>(staticConfig as SiteConfigType);
+  // 云端配置是否已拉取完成（避免先按默认值渲染再跳变）
+  const [loaded, setLoaded] = useState(false);
 
   /** 从 API 加载最新配置 */
   const loadConfig = async () => {
@@ -71,6 +75,8 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('加载动态配置失败，使用静态配置', error);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -79,7 +85,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SiteConfigContext.Provider value={{ config, refreshConfig: loadConfig }}>
+    <SiteConfigContext.Provider value={{ config, loaded, refreshConfig: loadConfig }}>
       {children}
     </SiteConfigContext.Provider>
   );

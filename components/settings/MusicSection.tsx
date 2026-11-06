@@ -30,23 +30,23 @@ export default function MusicSection({ formData, handleUpdate }: any) {
     });
   }, [cloudMusicIds.join(',')]);
 
-  // 查询网易云歌曲详情（通过公开 API）
+  // 查询歌曲详情：走本站 /api/music 代理，避免浏览器跨域被拦
   const fetchSongDetail = async (id: string) => {
     try {
-      const res = await fetch(`https://music.163.com/api/song/detail?id=${id}&ids=%5B${id}%5D`);
+      const res = await fetch(`/api/music?type=song&id=${id}`, { cache: 'no-store' });
       const data = await res.json();
-      if (data.songs && data.songs.length > 0) {
-        const song = data.songs[0];
+      if (data.success && data.data) {
         setMusicDetails(prev => ({
           ...prev,
           [id]: {
-            name: song.name,
-            artist: song.artists?.map((a: any) => a.name).join('/') || '未知',
-            cover: song.album?.picUrl ? `${song.album.picUrl}?param=100y100` : '',
+            name: data.data.title,
+            artist: data.data.artist,
+            cover: data.data.cover,
+            playable: data.data.playable,
           }
         }));
       } else {
-        setMusicDetails(prev => ({ ...prev, [id]: { error: true, name: '未找到歌曲' } }));
+        setMusicDetails(prev => ({ ...prev, [id]: { error: true, name: data.error || '未找到歌曲' } }));
       }
     } catch {
       setMusicDetails(prev => ({ ...prev, [id]: { error: true, name: '查询失败' } }));
@@ -64,18 +64,18 @@ export default function MusicSection({ formData, handleUpdate }: any) {
     setQueryLoading(true);
     setQueryResult(null);
     try {
-      const res = await fetch(`https://music.163.com/api/song/detail?id=${id}&ids=%5B${id}%5D`);
+      const res = await fetch(`/api/music?type=song&id=${id}`, { cache: 'no-store' });
       const data = await res.json();
-      if (data.songs && data.songs.length > 0) {
-        const song = data.songs[0];
+      if (data.success && data.data) {
         setQueryResult({
           id,
-          name: song.name,
-          artist: song.artists?.map((a: any) => a.name).join('/') || '未知',
-          cover: song.album?.picUrl ? `${song.album.picUrl}?param=100y100` : '',
+          name: data.data.title,
+          artist: data.data.artist,
+          cover: data.data.cover,
+          playable: data.data.playable,
         });
       } else {
-        setQueryResult({ error: true, name: '未找到该歌曲，请检查 ID' });
+        setQueryResult({ error: true, name: data.error || '未找到该歌曲，请检查 ID' });
       }
     } catch {
       setQueryResult({ error: true, name: '查询失败，请稍后重试' });
